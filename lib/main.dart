@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'T.tracker BEAT V0.2'),
     );
   }
 }
@@ -35,6 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _locationMessage = "Press the button to get location";
   bool _isTracking = false;
   Timer? _timer;
+  static const platform = MethodChannel('com.example.gps/record');
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
@@ -63,15 +65,33 @@ class _MyHomePageState extends State<MyHomePage> {
       _locationMessage =
       "Latitude: ${position.latitude}, Longitude: ${position.longitude}";
     });
+
+    try {
+      await platform.invokeMethod('recordLocation', {
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    } on PlatformException catch (e) {
+      print("Failed to record location: '${e.message}'.");
+    }
   }
 
   void _startTracking() {
     _getCurrentLocation();
-    _timer = Timer.periodic(Duration(seconds: 2), (Timer t) => _getCurrentLocation());
+    _timer = Timer.periodic(Duration(seconds: 5), (Timer t) => _getCurrentLocation());
   }
 
   void _stopTracking() {
     _timer?.cancel();
+    String endTime = DateTime.now().toIso8601String().replaceAll(RegExp(r'[-:.]'), '');
+    try {
+      platform.invokeMethod('saveFile', {
+        'endTime': endTime,
+      });
+    } on PlatformException catch (e) {
+      print("Failed to save file: '${e.message}'.");
+    }
   }
 
   void _toggleTracking() {
