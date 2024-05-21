@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -32,6 +33,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String _locationMessage = "Press the button to get location";
+  bool _isTracking = false;
+  Timer? _timer;
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
@@ -62,6 +65,27 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _startTracking() {
+    _getCurrentLocation();
+    _timer = Timer.periodic(Duration(seconds: 2), (Timer t) => _getCurrentLocation());
+  }
+
+  void _stopTracking() {
+    _timer?.cancel();
+  }
+
+  void _toggleTracking() {
+    setState(() {
+      if (_isTracking) {
+        _stopTracking();
+        _isTracking = false;
+      } else {
+        _startTracking();
+        _isTracking = true;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,8 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _getCurrentLocation,
-              child: const Text("Start"),
+              onPressed: _toggleTracking,
+              child: Text(_isTracking ? "Stop" : "Start"),
             ),
           ],
         ),
