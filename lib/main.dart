@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'T.tracker BEAT V0.2.2',
+      title: 'T.tracker BEAT V0.2.3',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('T.tracker BEAT V0.2.2'),
+        title: const Text('T.tracker BEAT V0.2.3'),
       ),
       body: Center(
         child: _pages.elementAt(_selectedIndex),
@@ -149,9 +149,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _startTracking() {
-    _getCurrentLocation();
-    _timer = Timer.periodic(Duration(seconds: 5), (Timer t) => _getCurrentLocation());
+    DateTime? lastTime;
+    _getCurrentLocation(); // 立即获取当前位置
+    _timer = Timer.periodic(Duration(milliseconds: 20), (Timer t) {//20毫秒
+      DateTime now = DateTime.now();
+      if (lastTime != null) {
+        Duration actualInterval = now.difference(lastTime!);
+        print("Actual interval: ${actualInterval.inMilliseconds} ms");//打印在控制台看实际延迟
+      }
+      lastTime = now;
+      _getCurrentLocation(); // 获取当前位置，在定时器的周期内
+    });
   }
+
 
   void _stopTracking() {
     _timer?.cancel();
