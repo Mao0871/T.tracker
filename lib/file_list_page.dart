@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'file_detail_page.dart';
 
 class FileListPage extends StatelessWidget {
   const FileListPage({super.key});
@@ -10,7 +11,7 @@ class FileListPage extends StatelessWidget {
     final files = directory!.listSync();
     return files
         .where((file) => file.path.endsWith('.json'))
-        .map((file) => file.path.split('/').last)
+        .map((file) => file.path)
         .toList();
   }
 
@@ -30,7 +31,17 @@ class FileListPage extends StatelessWidget {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               return ListTile(
-                title: Text(snapshot.data![index]),
+                title: Text(snapshot.data![index].split('/').last),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FileDetailPage(
+                        filePath: snapshot.data![index],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );

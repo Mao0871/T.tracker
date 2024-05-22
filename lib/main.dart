@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'file_list_page.dart';
-
+import 'file_detail_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'T.tracker BEAT V0.2',
+      title: 'T.tracker BEAT V0.2.2',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -52,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('T.tracker BEAT V0.2.1'),
+        title: const Text('T.tracker BEAT V0.2.2'),
       ),
       body: Center(
         child: _pages.elementAt(_selectedIndex),
@@ -66,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.blue,
               ),
               child: Text(
-                'Navigation',
+                'User Name',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -195,44 +193,6 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Text(_isTracking ? "Stop" : "Start"),
         ),
       ],
-    );
-  }
-}
-
-class FileListPage extends StatelessWidget {
-  const FileListPage({super.key});
-
-  Future<List<String>> _getRecordedFiles() async {
-    final directory = await getExternalStorageDirectory();
-    final files = directory!.listSync();
-    return files
-        .where((file) => file.path.endsWith('.json'))
-        .map((file) => file.path.split('/').last)
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<String>>(
-      future: _getRecordedFiles(),
-      builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return const Text('Error loading files');
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text('No files recorded');
-        } else {
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(snapshot.data![index]),
-              );
-            },
-          );
-        }
-      },
     );
   }
 }
