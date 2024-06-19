@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'file_list_page.dart';
 import 'file_detail_page.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'T.tracker BEAT V0.2.3.2',
+      title: 'T.tracker BEAT V0.2.3.3',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -50,7 +53,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('T.tracker BEAT V0.2.3.2'),
+        title: const Text('T.tracker BEAT V0.2.3.3'),
       ),
       body: Center(
         child: _pages.elementAt(_selectedIndex),
@@ -105,66 +108,126 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String _locationMessage = "Press the button to get location";
+  String _satelliteStatus = "Unknown"; // 初始状态为未知
   bool _isTracking = false;
   Timer? _timer;
   static const platform = MethodChannel('com.example.gps/record');
+
+  double? _lastLatitude;
+  double? _lastLongitude;
+  double? _lastAccuracy;
+  int? _lastSatellites;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermission();
+    _getCurrentLocation();  // 启动位置监听
+  }
+
+
+  Future<void> _checkPermission() async {
+    var status = await Permission.location.request();
+    if (status.isGranted) {
+      // Permission is granted
+    } else if (status.isDenied) {
+      // Permission is denied, request again
+      await Permission.location.request();
+    } else if (status.isPermanentlyDenied) {
+      // Permissions are permanently denied, we cannot request permissions.
+      openAppSettings();
+    }
+  }
+
+
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // 检查定位服务是否启用
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
+      // 未启用定位服务
       return;
     }
 
+    // 检查定位权限
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
+        // 用户拒绝权限
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
+      // 权限永久拒绝，无法请求
       return;
     }
 
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      _locationMessage =
-      "Latitude: ${position.latitude}, Longitude: ${position.longitude}";
-    });
+    // 获取位置流并监听更新
+    StreamSubscription<Position> positionStream = Geolocator.getPositionStream().listen(
+            (Position position) {
+          if (position != null) {
+            double latitude = position.latitude;
+            double longitude = position.longitude;
+            double? accuracy = position.accuracy;
 
-    try {
-      await platform.invokeMethod('recordLocation', {
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'timestamp': DateTime.now().toIso8601String(),
-      });
-    } on PlatformException catch (e) {
-      print("Failed to record location: '${e.message}'.");
-    }
+            // 在此更新状态
+            setState(() {
+              _lastLatitude = latitude;
+              _lastLongitude = longitude;
+              _lastAccuracy = accuracy;
+              _locationMessage = "Latitude: $latitude, Longitude: $longitude";
+              // 使用位置精度更新卫星状态
+              if (accuracy != null) {
+                if (accuracy <= 5) {
+                  _satelliteStatus = "Good";
+                } else if (accuracy <= 9) {
+                  _satelliteStatus = "Ok";
+                } else if (accuracy <= 14){
+                  _satelliteStatus = "Not Bad";
+                }else{
+                  _satelliteStatus = "Bad";
+                }
+              } else {
+                _satelliteStatus = "Unknown";
+              }
+            });
+          }
+        });
   }
 
   void _startTracking() {
+    setState(() {
+      _isTracking = true;
+    });
+    if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();  // 确保不会创建多个计时器
+    }
     DateTime? lastTime;
-    _getCurrentLocation(); // 立即获取当前位置
-    _timer = Timer.periodic(Duration(milliseconds: 50), (Timer t) {//20毫秒
+    _timer = Timer.periodic(Duration(milliseconds: 30), (Timer t) {
       DateTime now = DateTime.now();
       if (lastTime != null) {
         Duration actualInterval = now.difference(lastTime!);
-        print("Actual interval: ${actualInterval.inMilliseconds} ms");//打印在控制台看实际延迟
+        print("Actual interval: ${actualInterval.inMilliseconds} ms");
       }
       lastTime = now;
-      _getCurrentLocation(); // 获取当前位置，在定时器的周期内
+      // 这里可以添加其他需要周期执行的代码
     });
   }
 
 
   void _stopTracking() {
-    _timer?.cancel();
+    if (_timer != null) {
+      _timer!.cancel();
+      _timer = null;
+    }
+    setState(() {
+      _isTracking = false;
+    });
     String endTime = DateTime.now().toIso8601String().replaceAll(RegExp(r'[-:.]'), '');
     try {
       platform.invokeMethod('saveFile', {
@@ -174,6 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
       print("Failed to save file: '${e.message}'.");
     }
   }
+
 
   void _toggleTracking() {
     setState(() {
@@ -187,6 +251,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // 主页面最终显示的布局和内容
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -202,6 +267,16 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: _toggleTracking,
           child: Text(_isTracking ? "Stop" : "Start"),
         ),
+        const SizedBox(height: 20),
+        Text(
+          "Satellite Status: $_satelliteStatus",
+          style: Theme.of(context).textTheme.subtitle1,
+        ),
+        if (_lastAccuracy != null) // 仅当有精度信息时显示
+          Text(
+            "Accuracy: ${_lastAccuracy}m",
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
       ],
     );
   }
