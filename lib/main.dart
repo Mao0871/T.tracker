@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'T.tracker BEAT V0.2.3.1',
+      title: 'T.tracker BEAT V0.2.3.2',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('T.tracker BEAT V0.2.3'),
+        title: const Text('T.tracker BEAT V0.2.3.2'),
       ),
       body: Center(
         child: _pages.elementAt(_selectedIndex),
@@ -151,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _startTracking() {
     DateTime? lastTime;
     _getCurrentLocation(); // 立即获取当前位置
-    _timer = Timer.periodic(Duration(milliseconds: 20), (Timer t) {//20毫秒
+    _timer = Timer.periodic(Duration(milliseconds: 50), (Timer t) {//20毫秒
       DateTime now = DateTime.now();
       if (lastTime != null) {
         Duration actualInterval = now.difference(lastTime!);

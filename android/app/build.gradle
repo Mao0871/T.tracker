@@ -37,7 +37,8 @@ android {
         applicationId "com.example.t_tracker"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 20
+        //minSdkVersion flutter.minSdkVersion 之前是这样的，但是不知道哪里写的是19，导致无法正常运行。于是乎强制20了
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
