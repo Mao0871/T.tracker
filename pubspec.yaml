@@ -42,6 +42,7 @@ dependencies:
   permission_handler: ^10.2.0
   flutter_lints: ^3.0.0
   flutter_compass: ^0.8.0
+  event_bus: ^2.0.0
 
 
 

@@ -50,7 +50,7 @@ public class MainActivity extends FlutterActivity {
                             }
                         }
                 );
-    }
+    }//这个方法虽然没有被调用过，但是他是java和flutter之间的桥梁
 
     private boolean recordLocation(double latitude, double longitude, String timestamp) {
         try {
@@ -98,5 +98,5 @@ public class MainActivity extends FlutterActivity {
                     Manifest.permission.ACCESS_COARSE_LOCATION
             }, 1);
         }
-    }
+    }//获取权限
 }

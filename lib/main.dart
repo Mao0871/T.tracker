@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'T.tracker BEAT V0.2.3.3',
+      title: 'T.tracker BEAT V0.2.3.4.2',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -35,14 +35,15 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+//页面跳转代码实现
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = <Widget>[
-    MyHomePage(title: 'GPS Tracker'),
-    FileListPage(),
+    MyHomePage(title: 'GPS Tracker'),//主页面
+    FileListPage(),//文件记录界面
   ];
-
+//定义了一个list用于返回对应的界面
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -53,7 +54,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('T.tracker BEAT V0.2.3.3'),
+        title: const Text('T.tracker BEAT V0.2.3.4.2'),//通知栏的字符串
       ),
       body: Center(
         child: _pages.elementAt(_selectedIndex),
@@ -62,7 +63,7 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
+            DrawerHeader(//顶部导航栏，现在使用username作为占位
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
@@ -78,7 +79,7 @@ class _HomePageState extends State<HomePage> {
               leading: Icon(Icons.location_on),
               title: Text('GPS Tracker'),
               onTap: () {
-                _onItemTapped(0);
+                _onItemTapped(0);//调用界面1，也就是主界面
                 Navigator.pop(context);
               },
             ),
@@ -106,12 +107,15 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+
+
+
 class _MyHomePageState extends State<MyHomePage> {
   String _locationMessage = "Press the button to get location";
   String _satelliteStatus = "Unknown"; // Initial unknown status
   bool _isTracking = false;
   Timer? _timer;
-  static const platform = MethodChannel('com.example.gps/record');
+  static const platform = MethodChannel('com.example.gps/record');//和原生安卓通讯
 
   double? _lastLatitude;
   double? _lastLongitude;
@@ -151,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _updateSatelliteStatus(position.accuracy);
       });
 
-      await platform.invokeMethod('recordLocation', {
+      await platform.invokeMethod('recordLocation', {//与安卓通讯，使用MainActivity中的recordLocatio方法
         'latitude': position.latitude,
         'longitude': position.longitude,
         'timestamp': DateTime.now().toIso8601String(),
@@ -182,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _isTracking = true;
     });
     _getCurrentLocation();
-    _timer = Timer.periodic(Duration(milliseconds: 100), (Timer t) => _getCurrentLocation());
+    _timer = Timer.periodic(Duration(milliseconds: 1000), (Timer t) => _getCurrentLocation());
   }
 
   void _stopTracking() {
@@ -191,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _isTracking = false;
     });
     String endTime = DateTime.now().toIso8601String().replaceAll(RegExp(r'[-:.]'), '');
-    platform.invokeMethod('saveFile', {'endTime': endTime}).catchError((e) {
+    platform.invokeMethod('saveFile', {'endTime': endTime}).catchError((e) {//与安卓通讯，使用MainActivity中的saveFile方法
       print("Failed to save file: '${e.message}'");
     });
   }
